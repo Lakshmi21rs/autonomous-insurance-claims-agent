@@ -1,0 +1,920 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>FNOL Claims Processing Agent</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=IBM+Plex+Mono:wght@400;500&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0e0e12;
+      --surface: #16161c;
+      --surface2: #1e1e28;
+      --border: #2a2a38;
+      --accent: #e8c547;
+      --accent2: #5b8dee;
+      --danger: #e05c5c;
+      --success: #4ecb8d;
+      --warning: #f59e4a;
+      --purple: #9b6dff;
+      --text: #e8e8f0;
+      --text-muted: #7a7a99;
+      --font-display: 'DM Serif Display', serif;
+      --font-mono: 'IBM Plex Mono', monospace;
+      --font-body: 'Instrument Sans', sans-serif;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-body);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* ── Grid Background ── */
+    body::before {
+      content: '';
+      position: fixed; inset: 0;
+      background-image:
+        linear-gradient(rgba(232,197,71,0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(232,197,71,0.03) 1px, transparent 1px);
+      background-size: 48px 48px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 24px;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* ── Header ── */
+    header {
+      padding: 32px 0 24px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 48px;
+    }
+
+    .header-inner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+
+    .logo-area {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .logo-icon {
+      width: 44px; height: 44px;
+      background: linear-gradient(135deg, var(--accent) 0%, #f0a020 100%);
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 20px;
+    }
+
+    .brand-name {
+      font-family: var(--font-display);
+      font-size: 1.5rem;
+      letter-spacing: -0.02em;
+    }
+
+    .brand-name span { color: var(--accent); }
+
+    .status-badge {
+      display: flex; align-items: center; gap: 8px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 100px;
+      padding: 6px 14px;
+      font-size: 0.75rem;
+      font-family: var(--font-mono);
+      color: var(--text-muted);
+    }
+
+    .status-dot {
+      width: 7px; height: 7px;
+      background: var(--success);
+      border-radius: 50%;
+      animation: pulse 2s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.5; transform: scale(0.8); }
+    }
+
+    /* ── Main Layout ── */
+    .main-grid {
+      display: grid;
+      grid-template-columns: 400px 1fr;
+      gap: 28px;
+      align-items: start;
+    }
+
+    @media (max-width: 900px) {
+      .main-grid { grid-template-columns: 1fr; }
+    }
+
+    /* ── Panel ── */
+    .panel {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      overflow: hidden;
+    }
+
+    .panel-header {
+      padding: 20px 24px 16px;
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; gap: 10px;
+    }
+
+    .panel-header-icon {
+      width: 32px; height: 32px;
+      background: var(--surface2);
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 15px;
+    }
+
+    .panel-title {
+      font-family: var(--font-display);
+      font-size: 1.05rem;
+      letter-spacing: -0.01em;
+    }
+
+    .panel-body { padding: 24px; }
+
+    /* ── Upload Zone ── */
+    .upload-zone {
+      border: 2px dashed var(--border);
+      border-radius: 12px;
+      padding: 40px 24px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.25s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .upload-zone::before {
+      content: '';
+      position: absolute; inset: 0;
+      background: radial-gradient(ellipse at center, rgba(232,197,71,0.05) 0%, transparent 70%);
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+
+    .upload-zone:hover, .upload-zone.dragover {
+      border-color: var(--accent);
+      background: rgba(232,197,71,0.04);
+    }
+
+    .upload-zone:hover::before, .upload-zone.dragover::before { opacity: 1; }
+
+    .upload-icon {
+      font-size: 2.5rem;
+      margin-bottom: 12px;
+      filter: drop-shadow(0 0 12px rgba(232,197,71,0.4));
+    }
+
+    .upload-title {
+      font-family: var(--font-display);
+      font-size: 1.1rem;
+      margin-bottom: 6px;
+    }
+
+    .upload-sub {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      font-family: var(--font-mono);
+    }
+
+    #fileInput { display: none; }
+
+    .file-selected {
+      margin-top: 16px;
+      padding: 12px 16px;
+      background: var(--surface2);
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      display: flex; align-items: center; gap: 10px;
+      font-size: 0.85rem;
+    }
+
+    .file-icon { font-size: 1.2rem; }
+    .file-name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .file-remove {
+      cursor: pointer;
+      color: var(--text-muted);
+      font-size: 1rem;
+      transition: color 0.2s;
+    }
+    .file-remove:hover { color: var(--danger); }
+
+    /* ── Routing Rules ── */
+    .rules-list { display: flex; flex-direction: column; gap: 10px; margin-top: 8px; }
+
+    .rule-item {
+      display: flex; align-items: flex-start; gap: 12px;
+      padding: 12px 14px;
+      background: var(--surface2);
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      font-size: 0.82rem;
+    }
+
+    .rule-badge {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      font-weight: 500;
+      padding: 3px 8px;
+      border-radius: 6px;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    .badge-fast { background: rgba(78,203,141,0.15); color: var(--success); border: 1px solid rgba(78,203,141,0.3); }
+    .badge-manual { background: rgba(245,158,74,0.15); color: var(--warning); border: 1px solid rgba(245,158,74,0.3); }
+    .badge-invest { background: rgba(224,92,92,0.15); color: var(--danger); border: 1px solid rgba(224,92,92,0.3); }
+    .badge-special { background: rgba(155,109,255,0.15); color: var(--purple); border: 1px solid rgba(155,109,255,0.3); }
+
+    .rule-text { color: var(--text-muted); line-height: 1.4; }
+
+    /* ── Submit Button ── */
+    .btn-process {
+      width: 100%;
+      margin-top: 20px;
+      padding: 14px 24px;
+      background: var(--accent);
+      color: #0e0e12;
+      border: none;
+      border-radius: 10px;
+      font-family: var(--font-body);
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+      transition: all 0.2s ease;
+      letter-spacing: 0.01em;
+    }
+
+    .btn-process:hover:not(:disabled) {
+      background: #f5d258;
+      transform: translateY(-1px);
+      box-shadow: 0 6px 24px rgba(232,197,71,0.25);
+    }
+
+    .btn-process:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+    }
+
+    /* ── Spinner ── */
+    .spinner {
+      width: 16px; height: 16px;
+      border: 2px solid rgba(14,14,18,0.3);
+      border-top-color: #0e0e12;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      display: none;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Result Panel ── */
+    #resultPanel { display: none; }
+
+    .result-header-bar {
+      padding: 20px 24px;
+      display: flex; align-items: center; justify-content: space-between;
+      border-bottom: 1px solid var(--border);
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .route-pill {
+      display: flex; align-items: center; gap: 8px;
+      padding: 8px 18px;
+      border-radius: 100px;
+      font-family: var(--font-mono);
+      font-size: 0.82rem;
+      font-weight: 500;
+    }
+
+    .route-fast-track { background: rgba(78,203,141,0.12); color: var(--success); border: 1px solid rgba(78,203,141,0.3); }
+    .route-manual-review { background: rgba(245,158,74,0.12); color: var(--warning); border: 1px solid rgba(245,158,74,0.3); }
+    .route-investigation-flag { background: rgba(224,92,92,0.12); color: var(--danger); border: 1px solid rgba(224,92,92,0.3); }
+    .route-specialist-queue { background: rgba(155,109,255,0.12); color: var(--purple); border: 1px solid rgba(155,109,255,0.3); }
+    .route-standard-review { background: rgba(91,141,238,0.12); color: var(--accent2); border: 1px solid rgba(91,141,238,0.3); }
+
+    /* ── Tabs ── */
+    .tabs {
+      display: flex;
+      border-bottom: 1px solid var(--border);
+      padding: 0 24px;
+      gap: 4px;
+    }
+
+    .tab-btn {
+      padding: 12px 16px;
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      font-family: var(--font-body);
+      font-size: 0.85rem;
+      cursor: pointer;
+      position: relative;
+      transition: color 0.2s;
+      border-bottom: 2px solid transparent;
+      margin-bottom: -1px;
+    }
+
+    .tab-btn.active {
+      color: var(--text);
+      border-bottom-color: var(--accent);
+    }
+
+    .tab-btn:hover:not(.active) { color: var(--text); }
+
+    .tab-content { display: none; padding: 24px; }
+    .tab-content.active { display: block; }
+
+    /* ── Fields Grid ── */
+    .fields-section { margin-bottom: 28px; }
+
+    .section-label {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--accent);
+      margin-bottom: 12px;
+      display: flex; align-items: center; gap: 8px;
+    }
+
+    .section-label::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+
+    .fields-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 10px;
+    }
+
+    .field-card {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px 14px;
+    }
+
+    .field-key {
+      font-family: var(--font-mono);
+      font-size: 0.68rem;
+      color: var(--text-muted);
+      margin-bottom: 4px;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+
+    .field-val {
+      font-size: 0.88rem;
+      line-height: 1.4;
+      word-break: break-word;
+    }
+
+    .field-val.null {
+      color: var(--text-muted);
+      font-style: italic;
+      font-family: var(--font-mono);
+      font-size: 0.78rem;
+    }
+
+    .field-card.full-width { grid-column: 1 / -1; }
+
+    /* ── Missing Fields ── */
+    .missing-list {
+      display: flex; flex-wrap: wrap; gap: 8px;
+      margin-top: 4px;
+    }
+
+    .missing-tag {
+      display: flex; align-items: center; gap: 6px;
+      padding: 6px 12px;
+      background: rgba(224,92,92,0.1);
+      border: 1px solid rgba(224,92,92,0.25);
+      border-radius: 8px;
+      font-size: 0.8rem;
+      color: var(--danger);
+      font-family: var(--font-mono);
+    }
+
+    /* ── Warnings ── */
+    .warning-item {
+      display: flex; align-items: flex-start; gap: 10px;
+      padding: 12px 14px;
+      background: rgba(245,158,74,0.07);
+      border: 1px solid rgba(245,158,74,0.2);
+      border-radius: 10px;
+      font-size: 0.83rem;
+      color: var(--text);
+      margin-bottom: 8px;
+      line-height: 1.5;
+    }
+
+    .warning-icon { color: var(--warning); flex-shrink: 0; margin-top: 1px; }
+
+    /* ── Reasoning ── */
+    .reasoning-box {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--accent2);
+      border-radius: 10px;
+      padding: 16px 18px;
+      font-size: 0.85rem;
+      line-height: 1.7;
+      color: var(--text);
+    }
+
+    /* ── JSON View ── */
+    .json-output {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 18px;
+      font-family: var(--font-mono);
+      font-size: 0.8rem;
+      line-height: 1.7;
+      overflow-x: auto;
+      white-space: pre;
+      color: #c3d6f5;
+    }
+
+    .json-key { color: #9b6dff; }
+    .json-string { color: #4ecb8d; }
+    .json-number { color: #e8c547; }
+    .json-null { color: #7a7a99; }
+    .json-bool { color: #e05c5c; }
+
+    .copy-btn {
+      display: flex; align-items: center; gap: 6px;
+      padding: 8px 14px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text-muted);
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      cursor: pointer;
+      transition: all 0.2s;
+      margin-bottom: 12px;
+    }
+
+    .copy-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+    /* ── Empty State ── */
+    .empty-state {
+      text-align: center;
+      padding: 64px 32px;
+      color: var(--text-muted);
+    }
+
+    .empty-icon { font-size: 3rem; margin-bottom: 16px; opacity: 0.4; }
+    .empty-title { font-family: var(--font-display); font-size: 1.2rem; margin-bottom: 8px; color: var(--text); opacity: 0.6; }
+    .empty-sub { font-size: 0.85rem; line-height: 1.6; }
+
+    /* ── Error ── */
+    .error-box {
+      padding: 16px 18px;
+      background: rgba(224,92,92,0.1);
+      border: 1px solid rgba(224,92,92,0.3);
+      border-radius: 10px;
+      color: var(--danger);
+      font-size: 0.85rem;
+      margin: 24px;
+    }
+
+    /* ── Footer ── */
+    footer {
+      margin-top: 64px;
+      padding: 24px 0;
+      border-top: 1px solid var(--border);
+      text-align: center;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      font-family: var(--font-mono);
+    }
+
+    /* ── Animations ── */
+    .fade-in { animation: fadeIn 0.4s ease; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+    .count-chip {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 20px; height: 20px;
+      background: var(--danger);
+      border-radius: 50%;
+      font-size: 0.7rem;
+      font-family: var(--font-mono);
+      color: #fff;
+      margin-left: 6px;
+    }
+
+    .count-chip.ok {
+      background: var(--success);
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <header>
+    <div class="header-inner">
+      <div class="logo-area">
+        <div class="logo-icon">⚡</div>
+        <div>
+          <div class="brand-name"> Autonomous Insurance Claims Processing Agent</div>
+          <div style="font-size:0.75rem; color:var(--text-muted); font-family:var(--font-mono); margin-top:2px;">Autonomous Processing System</div>
+        </div>
+      </div>
+      <div class="status-badge">
+        <div class="status-dot"></div>
+        SYSTEM ONLINE
+      </div>
+    </div>
+  </header>
+
+  <div class="main-grid">
+
+    <!-- LEFT: Upload + Rules -->
+    <div>
+      <div class="panel">
+        <div class="panel-header">
+          <div class="panel-header-icon">📄</div>
+          <div class="panel-title">Document Upload</div>
+        </div>
+        <div class="panel-body">
+          <div class="upload-zone" id="uploadZone">
+            <div class="upload-icon">📋</div>
+            <div class="upload-title">Drop FNOL Document</div>
+            <div class="upload-sub">PDF or TXT · Click or drag & drop</div>
+            <input type="file" id="fileInput" accept=".pdf,.txt">
+          </div>
+
+          <div id="fileDisplay" style="display:none"></div>
+
+          <button class="btn-process" id="processBtn" disabled onclick="processClaim()">
+            <div class="spinner" id="spinner"></div>
+            <span id="btnText">⚡ Process Claim</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="panel" style="margin-top: 20px;">
+        <div class="panel-header">
+          <div class="panel-header-icon">🗺️</div>
+          <div class="panel-title">Routing Rules</div>
+        </div>
+        <div class="panel-body">
+          <div class="rules-list">
+            <div class="rule-item">
+              <span class="rule-badge badge-fast">FAST-TRACK</span>
+              <span class="rule-text">Damage &lt; ₹25,000 with no missing fields or flags</span>
+            </div>
+            <div class="rule-item">
+              <span class="rule-badge badge-manual">MANUAL REVIEW</span>
+              <span class="rule-text">Any mandatory field is missing or unparseable</span>
+            </div>
+            <div class="rule-item">
+              <span class="rule-badge badge-invest">INVESTIGATION</span>
+              <span class="rule-text">Description contains fraud / staged / inconsistent keywords</span>
+            </div>
+            <div class="rule-item">
+              <span class="rule-badge badge-special">SPECIALIST</span>
+              <span class="rule-text">Claim type is classified as bodily injury</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT: Results -->
+    <div class="panel" id="resultPanel">
+      <!-- content injected by JS -->
+    </div>
+
+    <div class="panel" id="emptyPanel">
+      <div class="empty-state">
+        <div class="empty-icon">🔍</div>
+        <div class="empty-title">Awaiting Document</div>
+        <div class="empty-sub">Upload a FNOL document on the left<br>to begin automated processing.</div>
+      </div>
+    </div>
+
+  </div>
+
+  <footer>
+     Autonomous Insurance Claims Processing Agent
+  </footer>
+</div>
+
+<script>
+  const API_BASE = "http://localhost:5000";
+  let selectedFile = null;
+
+  // ── Drag & Drop ──
+  const uploadZone = document.getElementById("uploadZone");
+  const fileInput = document.getElementById("fileInput");
+
+  uploadZone.addEventListener("click", () => fileInput.click());
+
+  uploadZone.addEventListener("dragover", e => {
+    e.preventDefault();
+    uploadZone.classList.add("dragover");
+  });
+
+  uploadZone.addEventListener("dragleave", () => uploadZone.classList.remove("dragover"));
+
+  uploadZone.addEventListener("drop", e => {
+    e.preventDefault();
+    uploadZone.classList.remove("dragover");
+    const file = e.dataTransfer.files[0];
+    if (file) handleFile(file);
+  });
+
+  fileInput.addEventListener("change", () => {
+    if (fileInput.files[0]) handleFile(fileInput.files[0]);
+  });
+
+  function handleFile(file) {
+    const ext = file.name.split(".").pop().toLowerCase();
+    if (!["pdf", "txt"].includes(ext)) {
+      alert("Only PDF and TXT files are supported.");
+      return;
+    }
+    selectedFile = file;
+    const display = document.getElementById("fileDisplay");
+    display.style.display = "flex";
+    display.innerHTML = `
+      <div class="file-selected">
+        <span class="file-icon">${ext === "pdf" ? "📕" : "📄"}</span>
+        <span class="file-name">${escHtml(file.name)}</span>
+        <span class="file-size" style="color:var(--text-muted);font-size:0.75rem;font-family:var(--font-mono)">${(file.size/1024).toFixed(1)} KB</span>
+        <span class="file-remove" onclick="clearFile()">✕</span>
+      </div>`;
+    document.getElementById("processBtn").disabled = false;
+  }
+
+  function clearFile() {
+    selectedFile = null;
+    fileInput.value = "";
+    document.getElementById("fileDisplay").style.display = "none";
+    document.getElementById("fileDisplay").innerHTML = "";
+    document.getElementById("processBtn").disabled = true;
+  }
+
+  // ── Process ──
+  async function processClaim() {
+    if (!selectedFile) return;
+
+    const btn = document.getElementById("processBtn");
+    const spinner = document.getElementById("spinner");
+    const btnText = document.getElementById("btnText");
+
+    btn.disabled = true;
+    spinner.style.display = "block";
+    btnText.textContent = "Processing…";
+
+    const formData = new FormData();
+    formData.append("file", selectedFile);
+
+    try {
+      const resp = await fetch(`${API_BASE}/process`, { method: "POST", body: formData });
+      const data = await resp.json();
+
+      if (!resp.ok || data.error) {
+        showError(data.error || "Server error");
+        return;
+      }
+
+      renderResult(data);
+    } catch (err) {
+      showError("Could not connect to the backend. Ensure the Flask server is running on port 5000.");
+    } finally {
+      btn.disabled = false;
+      spinner.style.display = "none";
+      btnText.textContent = "⚡ Process Claim";
+    }
+  }
+
+  // ── Render ──
+  function renderResult(data) {
+    document.getElementById("emptyPanel").style.display = "none";
+    const panel = document.getElementById("resultPanel");
+    panel.style.display = "block";
+
+    const route = data.recommendedRoute || "Unknown";
+    const routeClass = routeCssClass(route);
+    const routeIcon = routeIcon_(route);
+    const missingCount = (data.missingFields || []).length;
+    const warningCount = (data.warnings || []).length;
+
+    panel.innerHTML = `
+      <div class="result-header-bar fade-in">
+        <div>
+          <div style="font-family:var(--font-mono);font-size:0.7rem;text-transform:uppercase;letter-spacing:0.1em;color:var(--text-muted);margin-bottom:6px">Routing Decision</div>
+          <div class="route-pill ${routeClass}">${routeIcon} ${escHtml(route)}</div>
+        </div>
+        <div style="text-align:right">
+          <div style="font-size:0.75rem;color:var(--text-muted);font-family:var(--font-mono)">Processed</div>
+          <div style="font-size:0.82rem;margin-top:2px">${new Date().toLocaleTimeString()}</div>
+        </div>
+      </div>
+
+      <div class="tabs">
+        <button class="tab-btn active" onclick="switchTab(this,'tabFields')">
+          Extracted Fields
+        </button>
+        <button class="tab-btn" onclick="switchTab(this,'tabIssues')">
+          Issues
+          ${missingCount > 0 ? `<span class="count-chip">${missingCount}</span>` : `<span class="count-chip ok">✓</span>`}
+        </button>
+        <button class="tab-btn" onclick="switchTab(this,'tabReasoning')">Reasoning</button>
+        <button class="tab-btn" onclick="switchTab(this,'tabJson')">JSON</button>
+      </div>
+
+      <div id="tabFields" class="tab-content active fade-in">
+        ${renderFields(data.extractedFields)}
+      </div>
+
+      <div id="tabIssues" class="tab-content fade-in">
+        ${renderIssues(data.missingFields, data.warnings)}
+      </div>
+
+      <div id="tabReasoning" class="tab-content fade-in">
+        <div style="font-family:var(--font-mono);font-size:0.7rem;text-transform:uppercase;letter-spacing:0.1em;color:var(--text-muted);margin-bottom:12px">Agent Reasoning</div>
+        <div class="reasoning-box">${escHtml(data.reasoning || "No reasoning provided.")}</div>
+      </div>
+
+      <div id="tabJson" class="tab-content fade-in">
+        <button class="copy-btn" onclick="copyJson()">📋 Copy JSON</button>
+        <div class="json-output" id="jsonOutput">${syntaxHighlight(JSON.stringify(data, null, 2))}</div>
+      </div>
+    `;
+  }
+
+  function renderFields(fields) {
+    if (!fields) return '<div style="color:var(--text-muted)">No fields extracted.</div>';
+
+    const sections = [
+      { label: "Policy Information", keys: ["policyNumber","policyholderName","effectiveDateStart","effectiveDateEnd"] },
+      { label: "Incident Information", keys: ["incidentDate","incidentTime","incidentLocation","incidentDescription"] },
+      { label: "Involved Parties", keys: ["claimantName","thirdParties","contactDetails"] },
+      { label: "Asset Details", keys: ["assetType","assetId","estimatedDamage"] },
+      { label: "Other Mandatory Fields", keys: ["claimType","attachments","initialEstimate"] }
+    ];
+
+    return sections.map(sec => {
+      const cards = sec.keys.map(k => {
+        const val = fields[k];
+        const isDesc = k === "incidentDescription";
+        const displayVal = val !== null && val !== undefined
+          ? `<span class="field-val">${escHtml(String(val))}</span>`
+          : `<span class="field-val null">— not found —</span>`;
+        return `<div class="field-card${isDesc ? " full-width" : ""}">
+          <div class="field-key">${camelToLabel(k)}</div>
+          ${displayVal}
+        </div>`;
+      }).join("");
+
+      return `<div class="fields-section">
+        <div class="section-label">${sec.label}</div>
+        <div class="fields-grid">${cards}</div>
+      </div>`;
+    }).join("");
+  }
+
+  function renderIssues(missing, warnings) {
+    let html = "";
+
+    html += `<div class="fields-section">
+      <div class="section-label">Missing Mandatory Fields</div>`;
+
+    if (!missing || missing.length === 0) {
+      html += `<div style="color:var(--success);font-size:0.85rem;display:flex;align-items:center;gap:8px"><span>✅</span> All mandatory fields are present.</div>`;
+    } else {
+      html += `<div class="missing-list">`;
+      missing.forEach(f => {
+        html += `<div class="missing-tag">⚠ ${escHtml(f)}</div>`;
+      });
+      html += `</div>`;
+    }
+
+    html += `</div><div class="fields-section">
+      <div class="section-label">Consistency Warnings</div>`;
+
+    if (!warnings || warnings.length === 0) {
+      html += `<div style="color:var(--success);font-size:0.85rem;display:flex;align-items:center;gap:8px"><span>✅</span> No consistency issues detected.</div>`;
+    } else {
+      warnings.forEach(w => {
+        html += `<div class="warning-item"><span class="warning-icon">⚠</span>${escHtml(w)}</div>`;
+      });
+    }
+
+    html += "</div>";
+    return html;
+  }
+
+  // ── Helpers ──
+  function switchTab(btn, tabId) {
+    document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+    document.querySelectorAll(".tab-content").forEach(c => c.classList.remove("active"));
+    btn.classList.add("active");
+    document.getElementById(tabId).classList.add("active");
+  }
+
+  function showError(msg) {
+    document.getElementById("emptyPanel").style.display = "none";
+    const panel = document.getElementById("resultPanel");
+    panel.style.display = "block";
+    panel.innerHTML = `<div class="error-box">❌ Error: ${escHtml(msg)}</div>`;
+  }
+
+  function routeCssClass(route) {
+    const map = {
+      "Fast-Track": "route-fast-track",
+      "Manual Review": "route-manual-review",
+      "Investigation Flag": "route-investigation-flag",
+      "Specialist Queue": "route-specialist-queue",
+      "Standard Review": "route-standard-review"
+    };
+    return map[route] || "route-manual-review";
+  }
+
+  function routeIcon_(route) {
+    const map = {
+      "Fast-Track": "⚡",
+      "Manual Review": "📋",
+      "Investigation Flag": "🚨",
+      "Specialist Queue": "🏥",
+      "Standard Review": "📁"
+    };
+    return map[route] || "📄";
+  }
+
+  function camelToLabel(str) {
+    return str.replace(/([A-Z])/g, " $1").replace(/^./, s => s.toUpperCase()).trim();
+  }
+
+  function escHtml(str) {
+    return String(str)
+      .replace(/&/g,"&amp;")
+      .replace(/</g,"&lt;")
+      .replace(/>/g,"&gt;")
+      .replace(/"/g,"&quot;");
+  }
+
+  function syntaxHighlight(json) {
+    return json
+      .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+      .replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g, match => {
+        let cls = 'json-number';
+        if (/^"/.test(match)) {
+          cls = /:$/.test(match) ? 'json-key' : 'json-string';
+        } else if (/true|false/.test(match)) {
+          cls = 'json-bool';
+        } else if (/null/.test(match)) {
+          cls = 'json-null';
+        }
+        return `<span class="${cls}">${match}</span>`;
+      });
+  }
+
+  function copyJson() {
+    const raw = document.getElementById("jsonOutput").innerText;
+    navigator.clipboard.writeText(raw).then(() => {
+      const btn = document.querySelector(".copy-btn");
+      btn.textContent = "✅ Copied!";
+      setTimeout(() => btn.innerHTML = "📋 Copy JSON", 2000);
+    });
+  }
+</script>
+</body>
+</html>
