@@ -202,3 +202,7 @@ Returns `{"status": "ok"}` to confirm the server is running.
 - **Frontend:** HTML5, CSS3, Vanilla JavaScript (no frameworks)
 - **Extraction:** Regex-based pattern matching
 - **Communication:** REST API with JSON responses
+
+---
+## Demo link
+https://drive.google.com/file/d/1a5RWzN2toJQfOt6zXWIKe3_FrlnEAazU/view?usp=sharing
