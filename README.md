@@ -196,20 +196,6 @@ Returns `{"status": "ok"}` to confirm the server is running.
 
 ---
 
-## Test Cases (Sample Files)
-
-The following sample input files are provided **separately** (not in the zip):
-
-|  Expected Route | Why |
-|------|---------------|-----|
-|  **Fast-Track** | All fields present, damage = ₹18,000 |
-|  **Manual Review** | Missing: Incident Location, Estimated Damage, Initial Estimate, Effective Dates |
-|  **Investigation Flag** | Description contains "inconsistent", "staged", "fraud" |
-|  **Specialist Queue** | Claim Type = Injury |
-|  **Standard Review** | All fields present, damage = ₹3,40,000 (above threshold); also flags estimate mismatch |
-
----
-
 ## Tech Stack
 
 - **Backend:** Python 3.9+, Flask, pdfplumber
