@@ -200,25 +200,13 @@ Returns `{"status": "ok"}` to confirm the server is running.
 
 The following sample input files are provided **separately** (not in the zip):
 
-| File | Expected Route | Why |
+|  Expected Route | Why |
 |------|---------------|-----|
-| `sample1_fast_track.txt` | **Fast-Track** | All fields present, damage = ₹18,000 |
-| `sample2_missing_fields.txt` | **Manual Review** | Missing: Incident Location, Estimated Damage, Initial Estimate, Effective Dates |
-| `sample3_fraud_flag.txt` | **Investigation Flag** | Description contains "inconsistent", "staged", "fraud" |
-| `sample4_injury_specialist.txt` | **Specialist Queue** | Claim Type = Injury |
-| `sample5_standard_review.txt` | **Standard Review** | All fields present, damage = ₹3,40,000 (above threshold); also flags estimate mismatch |
-
----
-
-## Troubleshooting
-
-| Problem | Solution |
-|---------|----------|
-| `ModuleNotFoundError: No module named 'flask'` | Run `pip install -r requirements.txt` |
-| `ModuleNotFoundError: No module named 'pdfplumber'` | Run `pip install pdfplumber` |
-| Frontend shows "Could not connect to backend" | Ensure `python app.py` is running in a separate terminal |
-| CORS error in browser | Use the Python HTTP server method for the frontend (Step 4 Option B) |
-| PDF not extracting text | Ensure the PDF contains selectable text (not a scanned image). For scanned PDFs, OCR pre-processing is required. |
+|  **Fast-Track** | All fields present, damage = ₹18,000 |
+|  **Manual Review** | Missing: Incident Location, Estimated Damage, Initial Estimate, Effective Dates |
+|  **Investigation Flag** | Description contains "inconsistent", "staged", "fraud" |
+|  **Specialist Queue** | Claim Type = Injury |
+|  **Standard Review** | All fields present, damage = ₹3,40,000 (above threshold); also flags estimate mismatch |
 
 ---
 
